@@ -41,6 +41,11 @@ class WebhookHandler:
             logger.debug("Ignoring pull request event")
             return None
 
+        # Set installation ID dynamically from the webhook payload
+        installation_id = payload.get("installation", {}).get("id")
+        if installation_id and hasattr(self._orchestrator, "_github_client"):
+            self._orchestrator._github_client._installation_id = installation_id
+
         context = IssueContext(
             issue_number=issue.get("number", 0),
             title=issue.get("title", ""),
