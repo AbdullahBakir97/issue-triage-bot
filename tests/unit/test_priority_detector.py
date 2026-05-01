@@ -38,24 +38,42 @@ class TestKeywordPriorityDetector:
         priority = await detector.detect_priority(context, IssueCategory.BUG)
         assert priority == Priority.P1
 
-    async def test_regular_bug_gets_p2(
+    async def test_crash_bug_gets_p1(
         self, detector: KeywordPriorityDetector, bug_issue: IssueContext
     ) -> None:
-        """Regular bugs should get P2 priority."""
+        """A bug describing a crash is a P1 — crash keywords escalate severity."""
         priority = await detector.detect_priority(bug_issue, IssueCategory.BUG)
-        assert priority == Priority.P2
+        assert priority == Priority.P1
 
-    async def test_cosmetic_issue_gets_p3(self, detector: KeywordPriorityDetector) -> None:
-        """Cosmetic issues should get P3 priority."""
+    async def test_cosmetic_bug_floors_at_p2(self, detector: KeywordPriorityDetector) -> None:
+        """Bugs default to P2 even when described with P3 keywords like 'minor'.
+
+        The category baseline is a *floor* — we don't downgrade bugs below P2
+        just because the reporter called it minor. (Real-world reasoning:
+        users often underestimate the impact of bugs.)
+        """
         context = IssueContext(
             issue_number=10,
-            title="Minor alignment issue in footer",
-            body="The footer text has cosmetic alignment problems.",
+            title="Minor alignment in footer",
+            body="The footer text alignment is slightly off.",
             author="user",
             repo_owner="org",
             repo_name="repo",
         )
         priority = await detector.detect_priority(context, IssueCategory.BUG)
+        assert priority == Priority.P2
+
+    async def test_minor_enhancement_downgrades_to_p3(self, detector: KeywordPriorityDetector) -> None:
+        """Enhancements (default P3) keep their default when no escalation keyword fires."""
+        context = IssueContext(
+            issue_number=11,
+            title="Polish: tweak button hover color",
+            body="Cosmetic polish to the button hover state.",
+            author="user",
+            repo_owner="org",
+            repo_name="repo",
+        )
+        priority = await detector.detect_priority(context, IssueCategory.ENHANCEMENT)
         assert priority == Priority.P3
 
     async def test_question_gets_p4(

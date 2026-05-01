@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 
 from src.analyzers.response_generator import ResponseGenerator
 from src.domain.entities import IssueContext, TriageResult
 from src.domain.enums import IssueCategory, Priority
-
 
 # ------------------------------------------------------------------ #
 # Fixtures
@@ -224,7 +225,9 @@ class TestFeatureRequest:
 
     @pytest.mark.asyncio
     async def test_feature_priority_changes_opener(self, generator):
-        ctx = _ctx(body="Substantial use case description here that exceeds the thin threshold easily.")
+        ctx = _ctx(
+            body="Substantial use case description here that exceeds the thin threshold easily."
+        )
         comments = []
         for p in [Priority.P0, Priority.P1, Priority.P2, Priority.P3, Priority.P4]:
             comments.append(
@@ -296,7 +299,7 @@ class TestDocs:
 
 
 class TestVoiceQuality:
-    AI_TRIGGERS = [
+    AI_TRIGGERS: ClassVar[list[str]] = [
         "I'd be happy to",
         "hope this helps",
         "feel free to reach out",
